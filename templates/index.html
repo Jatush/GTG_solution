@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4">Healthcare Medicine Monitor</h1>
+            <p class="lead">Real-time monitoring platform for essential medicine availability and pricing across India</p>
+            <hr class="my-4">
+            <p>Help us track medicine shortages and ensure fair pricing for everyone.</p>
+            <div class="d-flex gap-3">
+                <a class="btn btn-primary btn-lg" href="{{ url_for('medicine_search') }}">Search Medicines</a>
+                <a class="btn btn-outline-primary btn-lg" href="{{ url_for('register') }}">Join Platform</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-exclamation-triangle"></i> Live Alerts</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <strong>Insulin Shortage</strong><br>
+                    Reports from Mumbai districts
+                </div>
+                <div class="alert alert-info">
+                    <strong>Price Alert</strong><br>
+                    Thyroid medication price spike in Delhi
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-pills fa-3x text-primary mb-3"></i>
+                <h5>For Patients</h5>
+                <p>Report medicine shortages and overpricing in your area</p>
+                <a href="{{ url_for('register') }}?type=patient" class="btn btn-primary">Register as Patient</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-store fa-3x text-success mb-3"></i>
+                <h5>For Pharmacies</h5>
+                <p>Update inventory and help maintain medicine availability</p>
+                <a href="{{ url_for('register') }}?type=pharmacy" class="btn btn-success">Register Pharmacy</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-users fa-3x text-info mb-3"></i>
+                <h5>For Authorities</h5>
+                <p>Monitor trends and take action on critical shortages</p>
+                <a href="{{ url_for('register') }}?type=government" class="btn btn-info">Register Authority</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

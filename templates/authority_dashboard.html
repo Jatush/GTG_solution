@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block title %}Authority Dashboard - Healthcare Monitor{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-shield-alt"></i> Authority Dashboard</h1>
+            <div>
+                <a href="{{ url_for('analytics') }}" class="btn btn-info me-2">
+                    <i class="fas fa-chart-bar"></i> Analytics
+                </a>
+                <a href="{{ url_for('view_alerts') }}" class="btn btn-warning">
+                    <i class="fas fa-exclamation-triangle"></i> All Alerts
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Critical Metrics -->
+    <div class="col-md-3 mb-4">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6>Critical Alerts</h6>
+                        <h3>{{ critical_alerts|selectattr('severity', 'equalto', 'critical')|list|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6>High Priority</h6>
+                        <h3>{{ critical_alerts|selectattr('severity', 'equalto', 'high')|list|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6>Affected Locations</h6>
+                        <h3>{{ shortage_stats|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-map-marker-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6>Total Reports</h6>
+                        <h3>{{ critical_alerts|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-file-medical fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Critical Alerts -->
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-exclamation-triangle text-danger"></i> Critical & High Priority Alerts</h5>
+            </div>
+            <div class="card-body">
+                {% if critical_alerts %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Medicine</th>
+                                    <th>Location</th>
+                                    <th>Severity</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for alert in critical_alerts %}
+                                <tr class="{% if alert.severity == 'critical' %}table-danger{% elif alert.severity == 'high' %}table-warning{% endif %}">
+                                    <td>
+                                        <strong>{{ alert.medicine_name }}</strong>
+                                        {% if alert.severity == 'critical' %}
+                                            <i class="fas fa-exclamation-circle text-danger ms-1"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ alert.location_name }}</td>
+                                    <td>
+                                        {% if alert.severity == 'critical' %}
+                                            <span class="badge bg-danger">Critical</span>
+                                        {% elif alert.severity == 'high' %}
+                                            <span class="badge bg-warning">High</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Medium</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ alert.created_at.strftime('%Y-%m-%d %H:%M') if alert.created_at else 'N/A' }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" onclick="viewAlert({{ alert.id }})">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-success" onclick="resolveAlert({{ alert.id }})">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h5>No Critical Alerts</h5>
+                        <p class="text-muted">All medicine availability is stable.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Location Statistics -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-map-marker-alt"></i> Location Impact</h5>
+            </div>
+            <div class="card-body">
+                {% if shortage_stats %}
+                    {% for stat in shortage_stats %}
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h6 class="mb-0">{{ stat.location_name }}</h6>
+                            <small class="text-muted">
+                                {% if stat.avg_price_increase %}
+                                    Avg price increase: {{ "%.1f"|format(stat.avg_price_increase) }}%
+                                {% endif %}
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-danger">{{ stat.alert_count }} alerts</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No location data available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Action Items -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-tasks"></i> Recommended Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% if critical_alerts|selectattr('severity', 'equalto', 'critical')|list|length > 0 %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Emergency Response Required</h6>
+                            <small class="text-danger">Critical</small>
+                        </div>
+                        <p class="mb-1">{{ critical_alerts|selectattr('severity', 'equalto', 'critical')|list|length }} medicines have critical shortages</p>
+                        <small>Immediate coordination with suppliers needed</small>
+                    </div>
+                    {% endif %}
+                    
+                    {% if shortage_stats|length > 3 %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Multi-Location Impact</h6>
+                            <small class="text-warning">High</small>
+                        </div>
+                        <p class="mb-1">{{ shortage_stats|length }} locations affected</p>
+                        <small>Consider regional distribution strategy</small>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Monitor Price Fluctuations</h6>
+                            <small class="text-info">Medium</small>
+                        </div>
+                        <p class="mb-1">Track unusual price increases</p>
+                        <small>Review market conditions and regulations</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-danger" onclick="exportCriticalReport()">
+                        <i class="fas fa-file-export"></i> Export Critical Report
+                    </button>
+                    <button class="btn btn-warning" onclick="notifySuppliers()">
+                        <i class="fas fa-bell"></i> Notify Suppliers
+                    </button>
+                    <a href="{{ url_for('analytics') }}" class="btn btn-info">
+                        <i class="fas fa-chart-line"></i> Detailed Analytics
+                    </a>
+                    <button class="btn btn-success" onclick="generatePolicy()">
+                        <i class="fas fa-file-contract"></i> Generate Policy Brief
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alert Details Modal -->
+<div class="modal fade" id="alertModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Alert Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="alertDetails">
+                <!-- Alert details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" onclick="resolveCurrentAlert()">Mark as Resolved</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentAlertId = null;
+
+function viewAlert(alertId) {
+    currentAlertId = alertId;
+    
+    // This would typically fetch alert details via AJAX
+    document.getElementById('alertDetails').innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Alert Information</h6>
+                <p><strong>Alert ID:</strong> ${alertId}</p>
+                <p><strong>Status:</strong> Active</p>
+                <p><strong>Severity:</strong> Critical</p>
+                <p><strong>Type:</strong> Medicine Shortage</p>
+            </div>
+            <div class="col-md-6">
+                <h6>Impact Assessment</h6>
+                <p><strong>Affected Population:</strong> ~50,000 people</p>
+                <p><strong>Reports Count:</strong> 15 reports</p>
+                <p><strong>Last Updated:</strong> 2 hours ago</p>
+            </div>
+        </div>
+        <hr>
+        <h6>Recent Reports</h6>
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr><th>Date</th><th>Reporter</th><th>Location</th><th>Details</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>2024-01-15</td><td>Patient</td><td>Andheri</td><td>Insulin not available</td></tr>
+                    <tr><td>2024-01-14</td><td>Pharmacy</td><td>Bandra</td><td>Stock depleted</td></tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    new bootstrap.Modal(document.getElementById('alertModal')).show();
+}
+
+function resolveAlert(alertId) {
+    if (confirm('Are you sure you want to mark this alert as resolved?')) {
+        // This would typically send an AJAX request to resolve the alert
+        alert('Alert marked as resolved');
+        location.reload();
+    }
+}
+
+function resolveCurrentAlert() {
+    if (currentAlertId) {
+        resolveAlert(currentAlertId);
+    }
+}
+
+function exportCriticalReport() {
+    // This would generate and download a critical report
+    alert('Critical report will be generated and downloaded');
+}
+
+function notifySuppliers() {
+    // This would send notifications to suppliers
+    alert('Suppliers will be notified about critical shortages');
+}
+
+function generatePolicy() {
+    // This would generate a policy brief
+    alert('Policy brief will be generated based on current data');
+}
+
+// Auto-refresh every 2 minutes for critical alerts
+setInterval(function() {
+    location.reload();
+}, 120000);
+</script>
+{% endblock %}

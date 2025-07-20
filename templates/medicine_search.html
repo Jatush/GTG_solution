@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Search Medicines - Healthcare Monitor{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-search"></i> Search Medicines</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET">
+                    <div class="mb-3">
+                        <label for="medicine_id" class="form-label">Medicine</label>
+                        <select class="form-control" id="medicine_id" name="medicine_id">
+                            <option value="">Select Medicine</option>
+                            {% for medicine in medicines %}
+                            <option value="{{ medicine.id }}" {{ 'selected' if request.args.get('medicine_id') == medicine.id|string }}>
+                                {{ medicine.name }} ({{ medicine.strength }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="location_id" class="form-label">Location</label>
+                        <select class="form-control" id="location_id" name="location_id">
+                            <option value="">Select Location</option>
+                            {% for location in locations %}
+                            <option value="{{ location.id }}" {{ 'selected' if request.args.get('location_id') == location.id|string }}>
+                                {{ location.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-list"></i> Search Results</h5>
+            </div>
+            <div class="card-body">
+                {% if search_results %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Pharmacy</th>
+                                <th>Address</th>
+                                <th>Phone</th>
+                                <th>Stock</th>
+                                <th>Price</th>
+                                <th>MRP</th>
+                                <th>Batch</th>
+                                <th>Expiry</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in search_results %}
+                            <tr>
+                                <td>{{ result.pharmacy_name }}</td>
+                                <td>{{ result.address }}</td>
+                                <td>{{ result.phone }}</td>
+                                <td>{{ result.current_stock }}</td>
+                                <td>₹{{ result.unit_price }}</td>
+                                <td>₹{{ result.mrp }}</td>
+                                <td>{{ result.batch_number }}</td>
+                                <td>{{ result.expiry_date }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% elif request.args.get('medicine_id') %}
+                <div class="alert alert-warning">
+                    <p>No pharmacies found with this medicine in stock in the selected location.</p>
+                    {% if session.user_id and session.user_type == 'patient' %}
+                    <a href="{{ url_for('report_medicine') }}" class="btn btn-primary">Report this shortage</a>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="text-muted">Select a medicine and location to search for availability.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

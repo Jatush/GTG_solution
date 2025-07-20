@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Dashboard - Healthcare Monitor{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-user-injured"></i> Patient Dashboard</h1>
+            <a href="{{ url_for('report_medicine') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Report Medicine Issue
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Quick Stats -->
+    <div class="col-md-3 mb-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6>My Reports</h6>
+                        <h3>{{ my_reports|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-file-medical fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6>Active Alerts</h6>
+                        <h3>{{ active_alerts|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6>Search Medicines</h6>
+                        <small>Find availability</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-search fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card bg-secondary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6>AI Assistant</h6>
+                        <small>Ask about medicines</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-robot fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Quick Actions -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('report_medicine') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-exclamation-circle"></i> Report Shortage
+                    </a>
+                    <a href="{{ url_for('medicine_search') }}" class="btn btn-outline-success">
+                        <i class="fas fa-search"></i> Find Medicine
+                    </a>
+                    <a href="{{ url_for('view_alerts') }}" class="btn btn-outline-warning">
+                        <i class="fas fa-bell"></i> View Alerts
+                    </a>
+                    <a href="{{ url_for('chatbot') }}" class="btn btn-outline-info">
+                        <i class="fas fa-comments"></i> Chat Assistant
+                    </a>
+                    <!-- Existing Predict Button -->
+                    <a href="{{ url_for('predict_medicine') }}" class="btn btn-outline-dark">
+                        <i class="fas fa-chart-line"></i> Predict Shortage / Price
+                    </a>
+                    <!-- New Pharmacies Map Button -->
+                    <a href="{{ url_for('map') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-map-marker-alt"></i> View Pharmacies Map
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Alerts -->
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-exclamation-triangle"></i> Active Shortage Alerts</h5>
+            </div>
+            <div class="card-body">
+                {% if active_alerts %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Medicine</th>
+                                    <th>Location</th>
+                                    <th>Severity</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for alert in active_alerts %}
+                                <tr>
+                                    <td>{{ alert.medicine_name }}</td>
+                                    <td>{{ alert.location_name }}</td>
+                                    <td>
+                                        {% if alert.severity == 'critical' %}
+                                            <span class="badge bg-danger">Critical</span>
+                                        {% elif alert.severity == 'high' %}
+                                            <span class="badge bg-warning">High</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Medium</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ alert.created_at | datefmt('%Y-%m-%d') if alert.created_at else 'N/A' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No active alerts in your area.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- My Reports -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-file-medical"></i> My Reports</h5>
+                <a href="{{ url_for('report_medicine') }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus"></i> New Report
+                </a>
+            </div>
+            <div class="card-body">
+                {% if my_reports %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Medicine</th>
+                                    <th>Location</th>
+                                    <th>Type</th>
+                                    <th>Pharmacy</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in my_reports %}
+                                <tr>
+                                    <td>{{ report.created_at | datefmt('%Y-%m-%d') if report.created_at else 'N/A' }}</td>
+                                    <td>{{ report.medicine_name }}</td>
+                                    <td>{{ report.location_name }}</td>
+                                    <td>
+                                        {% if report.report_type == 'shortage' %}
+                                            <span class="badge bg-danger">Shortage</span>
+                                        {% elif report.report_type == 'price_increase' %}
+                                            <span class="badge bg-warning">Price Issue</span>
+                                        {% elif report.report_type == 'quality' %}
+                                            <span class="badge bg-info">Quality</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ report.report_type|title }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ report.pharmacy_name if report.pharmacy_name else 'N/A' }}</td>
+                                    <td>
+                                        {% if report.status == 'resolved' %}
+                                            <span class="badge bg-success">Resolved</span>
+                                        {% elif report.status == 'investigating' %}
+                                            <span class="badge bg-warning">Investigating</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewReport({{ report.id }})">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-file-medical fa-3x text-muted mb-3"></i>
+                        <h5>No reports yet</h5>
+                        <p class="text-muted">Start by reporting a medicine issue to help your community.</p>
+                        <a href="{{ url_for('report_medicine') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Create First Report
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Details Modal -->
+<div class="modal fade" id="reportModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Report Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="reportDetails">
+                <!-- Report details will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function viewReport(reportId) {
+    document.getElementById('reportDetails').innerHTML = `
+        <p><strong>Report ID:</strong> ${reportId}</p>
+        <p><strong>Status:</strong> Under Investigation</p>
+        <p><strong>Description:</strong> Report details would be loaded here...</p>
+    `;
+    new bootstrap.Modal(document.getElementById('reportModal')).show();
+}
+
+setInterval(function() {
+    location.reload();
+}, 300000);
+</script>
+{% endblock %}

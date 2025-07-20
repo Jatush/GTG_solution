@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pharmacy Map</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+
+        h2 {
+            text-align: center;
+            margin: 20px 0;
+            color: #333;
+        }
+
+        .container {
+            max-width: 90%;
+            margin: auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        form#searchForm {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        form#searchForm label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        form#searchForm input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        form#searchForm button {
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        form#searchForm button:hover {
+            background-color: #0056b3;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            height: calc(100vh - 270px); /* Adjust height below form */
+            margin: 20px auto;
+            max-width: 95%;
+            gap: 20px;
+        }
+
+        #map {
+            flex: 1;
+            min-width: 50%;
+            height: 100%;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .right-panel {
+            flex: 1;
+            min-width: 45%;
+            max-height: 100%;
+            overflow-y: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #pharmacyTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        #pharmacyTable th, #pharmacyTable td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            text-align: left;
+        }
+
+        #pharmacyTable th {
+            background-color: #007bff;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+
+        #pharmacyTable tr:hover {
+            background-color: #f1f9ff;
+        }
+
+        @media screen and (max-width: 900px) {
+            .main-content {
+                flex-direction: column;
+                height: auto;
+            }
+
+            #map {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2>Pharmacy Locator</h2>
+
+    <!-- Search Form -->
+    <div class="container">
+        <form id="searchForm">
+            <label for="location">Enter Your Location:</label>
+            <input type="text" id="location" name="location" placeholder="e.g. Mumbai, India" required />
+
+            <label for="medicines">Medicines Needed (comma separated):</label>
+            <input type="text" id="medicines" name="medicines" placeholder="e.g. Insulin, Paracetamol" required />
+
+            <button type="submit">Search Pharmacies</button>
+        </form>
+    </div>
+
+    <!-- Map + Table Side by Side -->
+    <div class="main-content">
+        <div id="map"></div>
+
+        <div class="right-panel">
+            <table id="pharmacyTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Pharmacy Name</th>
+                        <th>Address</th>
+                        <th>Medicine Prices</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Filled dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+    <script>
+        var map = L.map('map').setView([20.5937, 78.9629], 5);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        var pharmacies = {{ pharmacies | tojson }};
+        var cluster = L.markerClusterGroup();
+
+        pharmacies.forEach(function(pharmacy) {
+            if (pharmacy.latitude != null && pharmacy.longitude != null) {
+                var marker = L.marker([pharmacy.latitude, pharmacy.longitude])
+                    .bindPopup(`<b>${pharmacy.pharmacy_name}</b><br>${pharmacy.address}`);
+                cluster.addLayer(marker);
+            }
+        });
+
+        map.addLayer(cluster);
+
+        if (pharmacies.length > 0) {
+            map.fitBounds(cluster.getBounds(), { maxZoom: 12 });
+        }
+
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            let location = document.getElementById('location').value.trim();
+            let medicines = document.getElementById('medicines').value.trim();
+
+            if (!location || !medicines) {
+                alert("Please enter both location and medicines.");
+                return;
+            }
+
+            fetch(`/search_pharmacies?location=${encodeURIComponent(location)}&medicines=${encodeURIComponent(medicines)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.pharmacies || data.pharmacies.length === 0) {
+                        alert("No pharmacies found nearby with requested medicines.");
+                        document.getElementById('pharmacyTable').style.display = 'none';
+                        return;
+                    }
+
+                    cluster.clearLayers();
+                    const tableBody = document.getElementById('tableBody');
+                    tableBody.innerHTML = "";
+
+                    data.pharmacies.forEach(pharmacy => {
+                        let popupContent = `<b>${pharmacy.pharmacy_name}</b><br>${pharmacy.address}<br><br><b>Price Bands:</b><br>`;
+                        for (const [med, price] of Object.entries(pharmacy.medicine_prices)) {
+                            popupContent += `${med}: ₹${price}<br>`;
+                        }
+
+                        let marker = L.marker([pharmacy.latitude, pharmacy.longitude])
+                            .bindPopup(popupContent);
+                        cluster.addLayer(marker);
+
+                        let row = document.createElement('tr');
+
+                        let nameCell = document.createElement('td');
+                        nameCell.textContent = pharmacy.pharmacy_name;
+
+                        let addressCell = document.createElement('td');
+                        addressCell.textContent = pharmacy.address;
+
+                        let priceCell = document.createElement('td');
+                        priceCell.innerHTML = Object.entries(pharmacy.medicine_prices)
+                            .map(([med, price]) => `${med}: ₹${price}`).join('<br>');
+
+                        row.appendChild(nameCell);
+                        row.appendChild(addressCell);
+                        row.appendChild(priceCell);
+
+                        tableBody.appendChild(row);
+                    });
+
+                    map.addLayer(cluster);
+
+                    if (data.user_location) {
+                        map.setView([data.user_location.lat, data.user_location.lng], 12);
+                    } else {
+                        map.fitBounds(cluster.getBounds(), { maxZoom: 12 });
+                    }
+
+                    document.getElementById('pharmacyTable').style.display = 'table';
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Error fetching pharmacies. Please try again.");
+                });
+        });
+    </script>
+</body>
+</html>

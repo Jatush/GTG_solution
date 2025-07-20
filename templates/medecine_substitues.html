@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block title %}AI Medicine Substitutes - MediConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+    .substitute-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--primary-color);
+        margin-bottom: 1rem;
+    }
+    
+    .substitute-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .similarity-score {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+    
+    .substitute-type {
+        font-size: 0.9rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--secondary-color), #0891b2);
+        color: white;
+    }
+    
+    .price-comparison {
+        font-weight: 600;
+    }
+    
+    .price-comparison.cheaper {
+        color: var(--success-color);
+    }
+    
+    .price-comparison.expensive {
+        color: var(--danger-color);
+    }
+    
+    .availability-badge {
+        background: var(--success-color);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .safety-note {
+        background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+        border: 1px solid #ffc107;
+        color: #856404;
+        padding: 0.5rem;
+        border-radius: 6px;
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .original-medicine {
+        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        border: 2px solid var(--primary-color);
+    }
+    
+    .medicine-details {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .pharmacy-list {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.5rem;
+    }
+    
+    .pharmacy-item {
+        padding: 0.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .pharmacy-item:last-child {
+        border-bottom: none;
+    }
+    
+    .ai-badge {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="text-gradient">
+                    <i class="fas fa-robot"></i> AI Medicine Substitutes
+                </h1>
+                <a href="{{ url_for('medicine_search') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Search
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Original Medicine Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card original-medicine">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-pills"></i> Original Medicine
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="medicine-details">
+                                <h5>{{ original_medicine.name }}</h5>
+                                <p class="mb-1"><strong>Generic Name:</strong> {{ original_medicine.generic_name or 'N/A' }}</p>
+                                <p class="mb-1"><strong>Brand Name:</strong> {{ original_medicine.brand_name or 'N/A' }}</p>
+                                <p class="mb-1"><strong>Strength:</strong> {{ original_medicine.strength or 'N/A' }}</p>
+                                <p class="mb-0"><strong>Dosage Form:</strong> {{ original_medicine.dosage_form or 'N/A' }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="medicine-details">
+                                <p class="mb-1"><strong>Therapeutic Class:</strong> {{ original_medicine.therapeutic_class or 'N/A' }}</p>
+                                <p class="mb-1"><strong>Manufacturer:</strong> {{ original_medicine.manufacturer or 'N/A' }}</p>
+                                <p class="mb-1"><strong>Category:</strong> {{ original_medicine.category or 'N/A' }}</p>
+                                <p class="mb-0"><strong>Description:</strong> {{ original_medicine.description or 'N/A' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Filter -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6>Filter by Location</h6>
+                    <form method="GET" action="{{ url_for('medicine_substitutes', medicine_id=original_medicine.id) }}">
+                        <div class="input-group">
+                            <select name="location_id" class="form-control">
+                                <option value="">All Locations</option>
+                                {% for location in locations %}
+                                <option value="{{ location.id }}" {% if location.id|string == current_location_id %}selected{% endif %}>
+                                    {{ location.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Substitutes Results -->
+    <div class="row">
+        <div class="col-12">
+            {% if substitutes %}
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>
+                    <i class="fas fa-magic"></i> AI-Suggested Substitutes
+                    <span class="ai-badge">{{ substitutes|length }} Found</span>
+                </h3>
+            </div>
+
+            {% for substitute in substitutes %}
+            <div class="card substitute-card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="mb-1">{{ substitute.medicine.name }}</h5>
+                                    <span class="substitute-type">{{ substitute.substitute_type }}</span>
+                                </div>
+                                <div class="text-end">
+                                    <div class="similarity-score">
+                                        {{ (substitute.substitute_score * 100)|round(0)|int }}% Match
+                                    </div>
+                                    <div class="progress" style="width: 100px; height: 6px;">
+                                        <div class="progress-bar bg-primary" 
+                                             style="width: {{ (substitute.substitute_score * 100)|round(0)|int }}%">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Generic:</strong> {{ substitute.medicine.generic_name or 'N/A' }}</p>
+                                    <p class="mb-1"><strong>Brand:</strong> {{ substitute.medicine.brand_name or 'N/A' }}</p>
+                                    <p class="mb-1"><strong>Strength:</strong> {{ substitute.medicine.strength or 'N/A' }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Form:</strong> {{ substitute.medicine.dosage_form or 'N/A' }}</p>
+                                    <p class="mb-1"><strong>Manufacturer:</strong> {{ substitute.medicine.manufacturer or 'N/A' }}</p>
+                                    <p class="mb-1">
+                                        <strong>Price:</strong> 
+                                        <span class="price-comparison {% if 'Cheaper' in substitute.price_comparison %}cheaper{% elif 'expensive' in substitute.price_comparison %}expensive{% endif %}">
+                                            {{ substitute.price_comparison }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            {% if substitute.safety_notes %}
+                            <div class="safety-note">
+                                <i class="fas fa-exclamation-triangle"></i> <strong>Safety Notes:</strong>
+                                <ul class="mb-0 mt-1">
+                                    {% for note in substitute.safety_notes %}
+                                    <li>{{ note }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-4">
+                            <h6>
+                                <i class="fas fa-store"></i> Availability
+                                {% if substitute.availability %}
+                                <span class="availability-badge">{{ substitute.availability|length }} Pharmacy(s)</span>
+                                {% endif %}
+                            </h6>
+                            
+                            {% if substitute.availability %}
+                            <div class="pharmacy-list">
+                                {% for pharmacy in substitute.availability %}
+                                <div class="pharmacy-item">
+                                    <div>
+                                        <strong>{{ pharmacy.pharmacy_name }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ pharmacy.location_name }}</small>
+                                        <br>
+                                        <small>Stock: {{ pharmacy.current_stock }}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <strong>₹{{ pharmacy.unit_price }}</strong>
+                                        <br>
+                                        <small class="text-muted">MRP: ₹{{ pharmacy.mrp }}</small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p class="text-muted">No current availability data</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% else %}
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4>No Substitutes Found</h4>
+                    <p class="text-muted">Our AI couldn't find suitable substitutes for this medicine. Try searching for different medicines or contact a pharmacist for manual recommendations.</p>
+                    <a href="{{ url_for('medicine_search') }}" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Search Other Medicines
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- AI Disclaimer -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>AI Disclaimer:</strong> These suggestions are generated by AI based on medicine properties and should not replace professional medical advice. Always consult with a healthcare provider or pharmacist before switching medications.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate substitute cards on load
+    const cards = document.querySelectorAll('.substitute-card');
+    cards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'all 0.6s ease';
+            
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100);
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

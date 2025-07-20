@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Report Medicine Issue - Healthcare Monitor{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-exclamation-triangle"></i> Report Medicine Issue</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="medicine_id" class="form-label">Medicine *</label>
+                                <select class="form-control" id="medicine_id" name="medicine_id" required>
+                                    <option value="">Select Medicine</option>
+                                    {% for medicine in medicines %}
+                                    <option value="{{ medicine.id }}">{{ medicine.name }} ({{ medicine.strength }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="location_id" class="form-label">Location *</label>
+                                <select class="form-control" id="location_id" name="location_id" required>
+                                    <option value="">Select Location</option>
+                                    {% for location in locations %}
+                                    <option value="{{ location.id }}">{{ location.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="report_type" class="form-label">Issue Type *</label>
+                                <select class="form-control" id="report_type" name="report_type" required>
+                                    <option value="">Select Issue</option>
+                                    <option value="shortage">Shortage</option>
+                                    <option value="overpriced">Overpriced</option>
+                                    <option value="unavailable">Unavailable</option>
+                                    <option value="fake">Suspected Fake</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="pharmacy_id" class="form-label">Pharmacy (Optional)</label>
+                                <select class="form-control" id="pharmacy_id" name="pharmacy_id">
+                                    <option value="">Select Pharmacy</option>
+                                    {% for pharmacy in pharmacies %}
+                                    <option value="{{ pharmacy.id }}">{{ pharmacy.pharmacy_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="reported_price" class="form-label">Reported Price (₹)</label>
+                                <input type="number" step="0.01" class="form-control" id="reported_price" name="reported_price">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="expected_price" class="form-label">Expected Price (₹)</label>
+                                <input type="number" step="0.01" class="form-control" id="expected_price" name="expected_price">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" placeholder="Describe the issue in detail..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="prescription" class="form-label">Upload Prescription (Optional)</label>
+                        <input type="file" class="form-control" id="prescription" name="prescription" accept=".jpg,.jpeg,.png,.pdf">
+                        <small class="text-muted">Upload prescription to verify medicine requirement (JPG, PNG, PDF only)</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Submit Report</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

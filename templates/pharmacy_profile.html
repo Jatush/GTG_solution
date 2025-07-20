@@ -1,0 +1,400 @@
+{% extends "base.html" %}
+
+{% block title %}Pharmacy Profile - MediConnect{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-store"></i> Pharmacy Profile
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {% if pharmacy %}
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-md-6">
+                            <h5 class="text-gradient mb-3">
+                                <i class="fas fa-info-circle"></i> Basic Information
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Pharmacy Name</label>
+                                <div class="form-control-plaintext bg-light p-3 rounded">
+                                    {{ pharmacy.pharmacy_name }}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">License Number</label>
+                                <div class="form-control-plaintext bg-light p-3 rounded">
+                                    {{ pharmacy.license_number }}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Owner Name</label>
+                                <div class="form-control-plaintext bg-light p-3 rounded">
+                                    {{ pharmacy.owner_name or 'Not provided' }}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Phone</label>
+                                <div class="form-control-plaintext bg-light p-3 rounded">
+                                    {{ pharmacy.phone or 'Not provided' }}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <div class="form-control-plaintext bg-light p-3 rounded">
+                                    {{ pharmacy.email or 'Not provided' }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Address & Status -->
+                        <div class="col-md-6">
+                            <h5 class="text-gradient mb-3">
+                                <i class="fas fa-map-marker-alt"></i> Address & Status
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Address</label>
+                                <div class="form-control-plaintext bg-light p-3 rounded">
+                                    {{ pharmacy.address or 'Not provided' }}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Location</label>
+                                <div class="form-control-plaintext bg-light p-3 rounded">
+                                    {% if pharmacy.location_name %}
+                                        {{ pharmacy.location_name }}
+                                    {% else %}
+                                        Not specified
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Status</label>
+                                <div class="form-control-plaintext bg-light p-3 rounded">
+                                    {% if pharmacy.is_verified %}
+                                        <span class="badge badge-success">
+                                            <i class="fas fa-check-circle"></i> Verified
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-warning">
+                                            <i class="fas fa-clock"></i> Pending Verification
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Registration Date</label>
+                                <div class="form-control-plaintext bg-light p-3 rounded">
+                                    {% if pharmacy.created_at %}
+                                        {% if pharmacy.created_at is string %}
+                                            {{ pharmacy.created_at }}
+                                        {% else %}
+                                            {{ pharmacy.created_at.strftime('%B %d, %Y') }}
+                                        {% endif %}
+                                    {% else %}
+                                        Not available
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Operating Hours -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5 class="text-gradient mb-3">
+                                <i class="fas fa-clock"></i> Operating Hours
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Opening Time</label>
+                                        <div class="form-control-plaintext bg-light p-3 rounded">
+                                            {{ pharmacy.opening_time or 'Not specified' }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Closing Time</label>
+                                        <div class="form-control-plaintext bg-light p-3 rounded">
+                                            {{ pharmacy.closing_time or 'Not specified' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <hr>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editPharmacyModal">
+                                    <i class="fas fa-edit"></i> Edit Pharmacy Profile
+                                </button>
+                                
+                                <a href="{{ url_for('manage_inventory') }}" class="btn btn-secondary">
+                                    <i class="fas fa-boxes"></i> Manage Inventory
+                                </a>
+                                
+                                <a href="{{ url_for('pharmacy_dashboard') }}" class="btn btn-info">
+                                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% else %}
+                    <!-- No Pharmacy Profile -->
+                    <div class="text-center py-5">
+                        <i class="fas fa-store fa-3x text-muted mb-3"></i>
+                        <h4>No Pharmacy Profile Found</h4>
+                        <p class="text-muted">You need to create a pharmacy profile to access pharmacy features.</p>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPharmacyModal">
+                            <i class="fas fa-plus"></i> Create Pharmacy Profile
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="col-lg-4">
+            {% if pharmacy %}
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-chart-bar"></i> Quick Stats
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Total Medicines</span>
+                            <span class="badge badge-primary">{{ inventory_count or 0 }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Low Stock Items</span>
+                            <span class="badge badge-warning">{{ low_stock_count or 0 }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Out of Stock</span>
+                            <span class="badge badge-danger">{{ out_of_stock_count or 0 }}</span>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-grid">
+                        <a href="{{ url_for('pharmacy_dashboard') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-tachometer-alt"></i> View Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Edit Pharmacy Modal -->
+<div class="modal fade" id="editPharmacyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit"></i> Edit Pharmacy Profile
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('update_pharmacy_profile') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="pharmacy_name" class="form-label">Pharmacy Name</label>
+                                <input type="text" class="form-control" id="pharmacy_name" name="pharmacy_name" 
+                                       value="{{ pharmacy.pharmacy_name if pharmacy else '' }}" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="license_number" class="form-label">License Number</label>
+                                <input type="text" class="form-control" id="license_number" name="license_number" 
+                                       value="{{ pharmacy.license_number if pharmacy else '' }}" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="owner_name" class="form-label">Owner Name</label>
+                                <input type="text" class="form-control" id="owner_name" name="owner_name" 
+                                       value="{{ pharmacy.owner_name if pharmacy else '' }}">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Phone</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" 
+                                       value="{{ pharmacy.phone if pharmacy else '' }}">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ pharmacy.email if pharmacy else '' }}">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="location_id" class="form-label">Location</label>
+                                <select class="form-control" id="location_id" name="location_id">
+                                    <option value="">Select Location</option>
+                                    {% for location in locations %}
+                                    <option value="{{ location.id }}" 
+                                            {% if pharmacy and pharmacy.location_id == location.id %}selected{% endif %}>
+                                        {{ location.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea class="form-control" id="address" name="address" rows="3">{{ pharmacy.address if pharmacy else '' }}</textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="opening_time" class="form-label">Opening Time</label>
+                                <input type="time" class="form-control" id="opening_time" name="opening_time" 
+                                       value="{{ pharmacy.opening_time if pharmacy else '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="closing_time" class="form-label">Closing Time</label>
+                                <input type="time" class="form-control" id="closing_time" name="closing_time" 
+                                       value="{{ pharmacy.closing_time if pharmacy else '' }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Create Pharmacy Modal -->
+<div class="modal fade" id="createPharmacyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus"></i> Create Pharmacy Profile
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('create_pharmacy_profile') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="new_pharmacy_name" class="form-label">Pharmacy Name</label>
+                                <input type="text" class="form-control" id="new_pharmacy_name" name="pharmacy_name" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="new_license_number" class="form-label">License Number</label>
+                                <input type="text" class="form-control" id="new_license_number" name="license_number" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="new_owner_name" class="form-label">Owner Name</label>
+                                <input type="text" class="form-control" id="new_owner_name" name="owner_name">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="new_phone" class="form-label">Phone</label>
+                                <input type="tel" class="form-control" id="new_phone" name="phone">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="new_email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="new_email" name="email">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="new_location_id" class="form-label">Location</label>
+                                <select class="form-control" id="new_location_id" name="location_id">
+                                    <option value="">Select Location</option>
+                                    {% for location in locations %}
+                                    <option value="{{ location.id }}">{{ location.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="new_address" class="form-label">Address</label>
+                        <textarea class="form-control" id="new_address" name="address" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="new_opening_time" class="form-label">Opening Time</label>
+                                <input type="time" class="form-control" id="new_opening_time" name="opening_time">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="new_closing_time" class="form-label">Closing Time</label>
+                                <input type="time" class="form-control" id="new_closing_time" name="closing_time">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

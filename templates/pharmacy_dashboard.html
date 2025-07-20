@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Pharmacy Dashboard - Healthcare Monitor{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-store"></i> Pharmacy Dashboard</h2>
+    <div>
+        <a href="{{ url_for('manage_inventory') }}" class="btn btn-primary">
+            <i class="fas fa-boxes"></i> Manage Inventory
+        </a>
+        <a href="{{ url_for('chatbot') }}" class="btn btn-info">
+            <i class="fas fa-robot"></i> Inventory Bot
+        </a>
+    </div>
+</div>
+
+{% if pharmacy %}
+<!-- Pharmacy Info -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5><i class="fas fa-info-circle"></i> Pharmacy Information</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Name:</strong> {{ pharmacy.pharmacy_name }}</p>
+                <p><strong>License:</strong> {{ pharmacy.license_number }}</p>
+                <p><strong>Phone:</strong> {{ pharmacy.phone }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Address:</strong> {{ pharmacy.address }}</p>
+                <p><strong>Status:</strong> 
+                    <span class="badge bg-{{ 'success' if pharmacy.is_verified else 'warning' }}">
+                        {{ 'Verified' if pharmacy.is_verified else 'Pending Verification' }}
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Low Stock Alerts -->
+{% if low_stock %}
+<div class="alert alert-warning">
+    <h5><i class="fas fa-exclamation-triangle"></i> Low Stock Alert</h5>
+    <p>{{ low_stock|length }} medicine(s) are running low on stock:</p>
+    <ul>
+        {% for item in low_stock %}
+        <li>{{ item.medicine_name }} - {{ item.current_stock }} units remaining</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<!-- Inventory Overview -->
+<div class="card">
+    <div class="card-header">
+        <h5><i class="fas fa-boxes"></i> Current Inventory</h5>
+    </div>
+    <div class="card-body">
+        {% if inventory %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Medicine</th>
+                        <th>Generic Name</th>
+                        <th>Strength</th>
+                        <th>Stock</th>
+                        <th>Price</th>
+                        <th>MRP</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in inventory %}
+                    <tr class="{{ 'table-danger' if item.current_stock == 0 else 'table-warning' if item.current_stock <= item.minimum_stock_level else '' }}">
+                        <td>{{ item.medicine_name }}</td>
+                        <td>{{ item.generic_name }}</td>
+                        <td>{{ item.strength }}</td>
+                        <td>{{ item.current_stock }}</td>
+                        <td>₹{{ item.unit_price }}</td>
+                        <td>₹{{ item.mrp }}</td>
+                        <td>
+                            {% if item.current_stock == 0 %}
+                                <span class="badge bg-danger">Out of Stock</span>
+                            {% elif item.current_stock <= item.minimum_stock_level %}
+                                <span class="badge bg-warning">Low Stock</span>
+                            {% else %}
+                                <span class="badge bg-success">In Stock</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No inventory items found. <a href="{{ url_for('manage_inventory') }}">Add medicines to your inventory</a></p>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <h5><i class="fas fa-info-circle"></i> Complete Your Profile</h5>
+    <p>Please complete your pharmacy profile to start managing inventory.</p>
+    <a href="{{ url_for('pharmacy_profile') }}" class="btn btn-primary">Complete Profile</a>
+</div>
+{% endif %}
+{% endblock %}

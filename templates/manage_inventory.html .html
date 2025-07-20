@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Inventory - Healthcare Medicine Monitor{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-boxes"></i> Manage Inventory</h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addInventoryModal">
+                <i class="fas fa-plus"></i> Add Medicine
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Pharmacy Info -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-store"></i> {{ pharmacy.pharmacy_name }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Address:</strong> {{ pharmacy.address }}</p>
+                        <p><strong>Phone:</strong> {{ pharmacy.phone }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>License:</strong> {{ pharmacy.license_number }}</p>
+                        <p><strong>Owner:</strong> {{ pharmacy.owner_name }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current Inventory -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-list"></i> Current Inventory</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Medicine Name</th>
+                                <th>Generic Name</th>
+                                <th>Current Stock</th>
+                                <th>Unit Price</th>
+                                <th>MRP</th>
+                                <th>Batch</th>
+                                <th>Expiry Date</th>
+                                <th>Min. Stock</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in inventory %}
+                            <tr class="{% if item.current_stock <= item.minimum_stock_level %}low-stock{% endif %}">
+                                <td>
+                                    <strong>{{ item.medicine_name }}</strong>
+                                    {% if item.brand_name %}
+                                        <br><small class="text-muted">{{ item.brand_name }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.generic_name }}</td>
+                                <td>
+                                    <span class="badge {% if item.current_stock <= 0 %}bg-danger{% elif item.current_stock <= item.minimum_stock_level %}bg-warning{% else %}bg-success{% endif %}">
+                                        {{ item.current_stock }}
+                                    </span>
+                                </td>
+                                <td>₹{{ "%.2f"|format(item.unit_price) }}</td>
+                                <td>₹{{ "%.2f"|format(item.mrp) }}</td>
+                                <td>{{ item.batch_number }}</td>
+                                <td>{{ item.expiry_date }}</td>
+                                <td>{{ item.minimum_stock_level }}</td>
+                                <td>
+                                    {% if item.current_stock <= 0 %}
+                                        <span class="badge bg-danger">Out of Stock</span>
+                                    {% elif item.current_stock <= item.minimum_stock_level %}
+                                        <span class="badge bg-warning">Low Stock</span>
+                                    {% else %}
+                                        <span class="badge bg-success">In Stock</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editInventory({{ item.id }}, '{{ item.medicine_name }}', {{ item.current_stock }}, {{ item.unit_price }}, {{ item.mrp }}, '{{ item.batch_number }}', '{{ item.expiry_date }}', {{ item.minimum_stock_level }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Inventory Modal -->
+<div class="modal fade" id="addInventoryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Medicine to Inventory</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('update_inventory') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="medicine_id" class="form-label">Medicine</label>
+                                <select class="form-select" id="medicine_id" name="medicine_id" required>
+                                    <option value="">Select Medicine</option>
+                                    {% for medicine in medicines %}
+                                    <option value="{{ medicine.id }}">{{ medicine.name }} ({{ medicine.generic_name }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="current_stock" class="form-label">Current Stock</label>
+                                <input type="number" class="form-control" id="current_stock" name="current_stock" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="unit_price" class="form-label">Unit Price (₹)</label>
+                                <input type="number" class="form-control" id="unit_price" name="unit_price" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="mrp" class="form-label">MRP (₹)</label>
+                                <input type="number" class="form-control" id="mrp" name="mrp" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="batch_number" class="form-label">Batch Number</label>
+                                <input type="text" class="form-control" id="batch_number" name="batch_number" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="expiry_date" class="form-label">Expiry Date</label>
+                                <input type="date" class="form-control" id="expiry_date" name="expiry_date" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="minimum_stock_level" class="form-label">Minimum Stock Level</label>
+                                <input type="number" class="form-control" id="minimum_stock_level" name="minimum_stock_level" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add to Inventory</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Inventory Modal -->
+<div class="modal fade" id="editInventoryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Inventory Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('update_inventory') }}">
+                <div class="modal-body">
+                    <input type="hidden" id="edit_inventory_id" name="inventory_id">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">Medicine</label>
+                                <input type="text" class="form-control" id="edit_medicine_name" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_current_stock" class="form-label">Current Stock</label>
+                                <input type="number" class="form-control" id="edit_current_stock" name="current_stock" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_unit_price" class="form-label">Unit Price (₹)</label>
+                                <input type="number" class="form-control" id="edit_unit_price" name="unit_price" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_mrp" class="form-label">MRP (₹)</label>
+                                <input type="number" class="form-control" id="edit_mrp" name="mrp" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_batch_number" class="form-label">Batch Number</label>
+                                <input type="text" class="form-control" id="edit_batch_number" name="batch_number" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_expiry_date" class="form-label">Expiry Date</label>
+                                <input type="date" class="form-control" id="edit_expiry_date" name="expiry_date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_minimum_stock_level" class="form-label">Minimum Stock Level</label>
+                                <input type="number" class="form-control" id="edit_minimum_stock_level" name="minimum_stock_level" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Inventory</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function editInventory(id, name, stock, price, mrp, batch, expiry, minStock) {
+    document.getElementById('edit_inventory_id').value = id;
+    document.getElementById('edit_medicine_name').value = name;
+    document.getElementById('edit_current_stock').value = stock;
+    document.getElementById('edit_unit_price').value = price;
+    document.getElementById('edit_mrp').value = mrp;
+    document.getElementById('edit_batch_number').value = batch;
+    document.getElementById('edit_expiry_date').value = expiry;
+    document.getElementById('edit_minimum_stock_level').value = minStock;
+    
+    new bootstrap.Modal(document.getElementById('editInventoryModal')).show();
+}
+</script>
+{% endblock %}

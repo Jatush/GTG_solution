@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Predict Medicine Stock & Price</title>
+    <style>
+        /* Reset some default styles */
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f9fafb;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            background: white;
+            max-width: 480px;
+            width: 100%;
+            padding: 30px 40px;
+            border-radius: 10px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin-bottom: 25px;
+            text-align: center;
+            color: #2c3e50;
+            font-weight: 700;
+        }
+        form label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            margin-top: 15px;
+            color: #555;
+        }
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1.8px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        select:focus {
+            border-color: #007BFF;
+            outline: none;
+        }
+        button {
+            margin-top: 25px;
+            width: 100%;
+            padding: 12px;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 7px;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 30px;
+            background: #e7f3ff;
+            border: 1px solid #b3d7ff;
+            padding: 20px;
+            border-radius: 8px;
+            color: #003366;
+        }
+        .result h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-weight: 700;
+            font-size: 22px;
+            text-align: center;
+        }
+        .result p {
+            margin: 8px 0;
+            font-size: 17px;
+        }
+        /* Responsive */
+        @media (max-width: 520px) {
+            .container {
+                padding: 25px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Medicine Prediction Panel</h1>
+
+        <form method="POST">
+            <label for="region">Region:</label>
+            <select name="region" required>
+                <option value="Mumbai">Mumbai</option>
+                <option value="Delhi">Delhi</option>
+                <option value="Chennai">Chennai</option>
+                <option value="Kolkata">Kolkata</option>
+                <option value="Banglore">Banglore</option>
+            </select>
+
+            <label for="medicine">Medicine:</label>
+            <select name="medicine" required>
+                <option value="Insulin">Insulin</option>
+                <option value="Paracetamol">Paracetamol</option>
+                <option value="Amoxicillin">Amoxicillin</option>
+                <option value="Metformin">Metformin</option>
+                <option value="Atorvastatin">Atorvastatin</option>
+            </select>
+
+            <label for="season">Season:</label>
+            <select name="season" required>
+                <option value="Winter">Winter</option>
+                <option value="Summer">Summer</option>
+                <option value="Monsoon">Monsoon</option>
+            </select>
+
+            <button type="submit">Predict</button>
+        </form>
+
+        {% if result %}
+        <div class="result">
+            <h3>Prediction Result:</h3>
+            <p><strong>Region:</strong> {{ result.region }}</p>
+            <p><strong>Medicine:</strong> {{ result.medicine }}</p>
+            <p><strong>Season:</strong> {{ result.season }}</p>
+            <p><strong>Medicine Shortage:</strong> {{ result.shortage }}</p>
+            <p><strong>Price Spike:</strong> {{ result.price_spike }}</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
